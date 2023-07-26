@@ -1,0 +1,82 @@
+---
+title: "GPT Detectors TidyTuesday"
+jupyter: python3
+---
+
+```{python}
+import numpy as np
+import polars as pl
+import seaborn as sns
+```
+
+read in data
+
+```{python}
+detectors = pl.read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-07-18/detectors.csv', null_values="NA") 
+
+detectors.shape
+```
+
+```{python}
+ detectors.head()
+```
+
+get a list of distinct detectors
+
+```{python}
+detectors['detector'].unique() 
+```
+
+ok, so there are 7 distinct detectors in the dataset. But let's count to see which are represented more
+
+```{python}
+detector_counts =  detectors.groupby('detector').count()
+
+detector_counts
+```
+
+Ok so most are eventaly represented -- sapling and quil have slightly fewer. My guess is that this is from 2 difference experiments.
+
+Next let's see which models are correct most often
+
+```{python}
+correct_df = detectors.with_columns(
+    correct = pl.col('kind') == pl.col('.pred_class')
+) 
+
+correct_df.head()
+
+correct_df_summed = correct_df.groupby('detector').agg(pl.col('correct').mean().alias('pct_correct'))
+
+correct_df_summed
+```
+
+and let's plot this with seaborn
+
+```{python}
+sns.catplot(
+    data = correct_df_summed.to_pandas(),
+    kind = "bar",
+    x = "detector",
+    y = "pct_correct",
+    color = "steelblue"
+) 
+```
+
+And let's look at the distribution of the predicted probability for native vs non-native speakers
+
+```{python}
+native_complete = detectors.filter(
+    pl.col('native').is_not_null()
+)
+
+sns.displot(
+    data = native_complete,
+    x = '.pred_AI',
+    col = 'native',
+    facet_kws=dict(sharey = False)
+)
+```
+
+Yikes, so writings by native speakers are almost never classified as being written by AI, but those written by non-native speakers are much more likely to be so.
+
