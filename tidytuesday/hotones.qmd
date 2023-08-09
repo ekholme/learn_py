@@ -1,0 +1,43 @@
+---
+title: "Hot Ones Episodes TidyTuesday"
+jupyter: python3
+---
+
+```{python}
+import numpy as np
+import polars as pl
+import seaborn as sns
+
+```
+
+read in the data
+
+```{python}
+episodes = pl.read_csv(
+    "https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-08-08/episodes.csv"
+)
+
+episodes.shape
+```
+
+```{python}
+episodes.head()
+```
+
+So the most important thing here is to see how many people didn't finish and who they are
+
+```{python}
+no_finish = episodes.filter(pl.col("finished") == False)
+
+no_finish.shape[0]
+```
+
+ok, so 15 people didn't finish...let's see who they are
+
+```{python}
+ no_finish['guest'].to_list()
+```
+
+I'm pretty disappointed that Chance and Pusha are on this list.
+
+# RESUME HERE
