@@ -14,7 +14,8 @@ read in the data
 
 ```{python}
 episodes = pl.read_csv(
-    "https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-08-08/episodes.csv"
+    "https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-08-08/episodes.csv",
+    null_values='NA'
 )
 
 episodes.shape
@@ -40,4 +41,42 @@ ok, so 15 people didn't finish...let's see who they are
 
 I'm pretty disappointed that Chance and Pusha are on this list.
 
-# RESUME HERE
+Ok, so let's see how many episodes there are by season
+
+```{python}
+season_ep_counts = episodes.groupby('season', maintain_order=True).count() 
+
+season_ep_counts
+```
+
+Ok, so earlier seasons had more episodes (aside from s1). Let's plot this
+
+```{python}
+#probably want to coerce season to categorical
+s_cat_counts = season_ep_counts.with_columns(pl.col('season').cast(pl.Utf8))
+
+sns.barplot(
+    s_cat_counts.to_pandas(),
+    x='season', 
+    y='count',
+    color='steelblue'
+) 
+```
+
+Which guests have appeared multiple times?
+
+```{python}
+mult_appear = episodes.groupby('guest').count().filter(pl.col('count') > 1) 
+
+mult_appear.shape
+```
+
+Ok, so 12 people have been on multiple times.
+
+I'm also seeing 2 `null` entries, so let's see if the title for those tell us anything. Maybe they're solo episodes with Sean, so there isn't a guest?
+
+```{python}
+episodes.filter(pl.col('guest').is_null())['title'].to_list() 
+```
+
+Ok, so these are holiday specials. That makes sense.
