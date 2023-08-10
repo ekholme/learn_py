@@ -80,3 +80,5 @@ episodes.filter(pl.col('guest').is_null())['title'].to_list()
 ```
 
 Ok, so these are holiday specials. That makes sense.
+
+I think this one is done enough? There's not all that much more I'm interested in here.
