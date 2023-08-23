@@ -1,0 +1,100 @@
+---
+title: "Hot Ones Episodes TidyTuesday"
+date: 2023-08-15
+jupyter: python3
+---
+
+# Setup
+
+```{python}
+import numpy as np
+import polars as pl
+import seaborn as sns
+
+```
+
+## Read in Data
+
+Data comes from TidyTuesday [here](https://github.com/rfordatascience/tidytuesday/blob/master/data/2023/2023-08-15/readme.md)
+
+```{python}
+spam = pl.read_csv(
+    "https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2023/2023-08-15/spam.csv",
+    null_values="NA",
+)
+```
+
+```{python}
+spam.shape
+```
+
+```{python}
+spam.head()
+```
+
+## Check for Missing
+
+```{python}
+spam.null_count()
+```
+
+null_count() is a pretty sweet little helper to get missings per column
+
+# EDA
+
+## Count spam
+
+```{python}
+spam.groupby("yesno").count()
+```
+
+ok, so this definitely isn't the rate that spam typically comes in
+
+Let's recode this to be binary True/False
+
+```{python}
+spam2 = spam.with_columns(is_spam=pl.col("yesno") == "y")
+
+spam2.head()
+```
+
+And now we can calculate the proportion of spam
+
+```{python}
+sum(spam2["is_spam"].to_list()) / spam2.shape[0]
+```
+
+So about 40% of what we see is spam
+
+## Distribution of Numeric Cols
+
+```{python}
+X = spam2.select(pl.all().exclude(["is_spam", "yesno"]))
+
+X.head()
+```
+
+just look at crl.tot for now
+
+```{python}
+sns.displot(X, x="crl.tot", kind="kde")
+```
+
+
+reshape data to facet everything
+
+```{python}
+X = X.with_row_count()
+
+X_long = X.melt(id_vars="row_nr", value_vars=X.columns.remove("row_nr"))
+
+X_long.head()
+```
+
+```{python}
+sns.displot(X_long, x="value", kind="kde", col="variable", facet_kws=dict(sharex=False))
+# this sort works, but need to figure out a better way to approach
+```
+
+## RESUME HERE -- do some more exploration
+
